@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login • RPSU Lost &amp; Found</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root {
+      --bg: url('images/Ig01.jpg');
+    }
+
+    /* ✨ Login panel entry animation */
+    .form-card {
+      opacity: 0;
+      transform: translateY(40px) scale(0.95);
+      animation: fadeInUp 1s ease forwards;
+    }
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* ✨ Premium 3D button effect */
+    .button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(145deg, #e7e7e7, #909090);
+      box-shadow: 0 6px #4f4f4f;
+      transition: all 0.2s ease-in-out;
+    }
+    .button:hover { filter: brightness(1.1); }
+    .button:active { transform: translateY(4px); box-shadow: 0 2px #e7e7e7; }
+
+    /* ✨ Google button style (full width) */
+    .google-btn {
+      margin-top: 1rem;
+      border: none;
+      border-radius: 12px;
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #fff;
+      color: #444;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease-in-out;
+    }
+    .google-btn:hover { background: #f7f7f7; }
+    .google-btn img { width: 20px; height: 20px; }
+
+    /* ✨ Input fields glow + zoom */
+    .input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 1rem;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      outline: none;
+      font-size: 15px;
+      transition: all 0.25s ease-in-out;
+    }
+    .input:hover,
+    .input:focus {
+      border-color: #ffffff;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.7);
+      transform: scale(1.03);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Error message */
+    .error {
+      color: #ff7777;
+      margin-top: 0.5rem;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main class="hero">
+    <div class="overlay"></div>
+    <div class="container">
+      <section class="glass form-card">
+        <h2>Login</h2>
+        <form class="form" id="loginForm" method="POST" action="login.php" novalidate>
+
+          <input class="input" type="email" id="loginUser" name="email" placeholder="Email" required>
+<input class="input" type="password" id="loginPassword" name="password" placeholder="Password" required>
+
+          
+          <div class="row" style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+            <button class="button green" type="submit">Login</button>
+            <div><span style="opacity:.85;">Don’t have account?</span> <a class="muted" href="signup.html">Signup</a></div>
+          </div>
+
+          <!-- ✨ Continue with Google button -->
+          <button type="button" class="google-btn" id="googleLoginBtn">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
+            Continue with Google
+          </button>
+
+          <div id="loginError" class="error"></div>
+        </form>
+      </section>
+    </div>
+    <div class="footer"><a class="muted" href="index.html">← Back</a></div>
+  </main>
+
+ <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } 
+  from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_FIREBASE_PROJECT.firebaseapp.com",
+  projectId: "YOUR_FIREBASE_PROJECT_ID",
+  storageBucket: "YOUR_FIREBASE_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// --- Normal Login ---
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  const err = document.getElementById('loginError');
+  err.textContent = '';
+
+  if(!user || !pass){
+    err.textContent = 'Please fill out the form.';
+    return;
+  }
+
+  // ✅ Try Firebase login first
+  try {
+    await signInWithEmailAndPassword(auth, user, pass);
+    alert('Firebase login successful!');
+    window.location.href = "profile.html";
+    return;
+  } catch (firebaseError) {
+    console.log("Firebase login failed, trying PHP...", firebaseError);
+  }
+
+  // ✅ Fallback to PHP backend login
+  // --- Fallback to PHP backend login ---
+try {
+  const formData = new FormData();
+  formData.append('email', user);
+  formData.append('password', pass);
+
+  const response = await fetch('login.php', {
+    method: 'POST',
+    body: formData
+  });
+
+  const result = await response.text();
+  console.log("PHP Result:", result);
+
+  const json = JSON.parse(result);
+
+  if (json.success) {
+    alert('Login successful!');
+    window.location.href = 'profile.html';
+  } else {
+    err.textContent = json.error || result;
+  }
+} catch (error) {
+  err.textContent = 'Server error — please check PHP connection.';
+}
+});
+
+// --- Google Login ---
+document.getElementById('googleLoginBtn').addEventListener('click', async ()=>{
+  const err = document.getElementById('loginError');
+  err.textContent = '';
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    alert(`Welcome ${user.displayName}!`);
+    window.location.href = "profile.html";
+  } catch (error) {
+    err.textContent = error.message;
+  }
+});
+</script>
+
+</body>
+</html>

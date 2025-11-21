@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RPSU Lost & Found — Issues</title>
+  <style>
+    /* RESET + BASE */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html,body { height: 100%; }
+    body {
+      font-family: "Poppins", Arial, sans-serif;
+      background: linear-gradient(160deg, #0b1530 0%, #172a4a 45%, #223858 100%);
+      color: #e9eefc;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* SIDEBAR (desktop) */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      width: 230px;
+      background: linear-gradient(180deg,#0f1a33 0%, #162a52 100%);
+      padding: 34px 18px;
+      color: #ffffff;
+      box-shadow: 2px 0 18px rgba(0,0,0,0.4);
+      z-index: 1200;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .brand {
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 1.05rem;
+    }
+    .navlink {
+      display: block;
+      text-decoration: none;
+      color: #cbd6f7;
+      padding: 12px 12px;
+      border-radius: 10px;
+      transition: all .22s ease;
+      font-weight: 500;
+    }
+    .navlink:hover { background: rgba(255,255,255,0.04); color: #fff; transform: translateX(4px); }
+
+    /* HEADER (top for mobile) */
+    .topbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 62px;
+      display: none; /* only visible on small screens */
+      align-items: center;
+      justify-content: space-between; /* updated */
+      padding: 10px 16px;
+      gap: 12px;
+      z-index: 1150;
+      background: linear-gradient(180deg, rgba(8,13,26,0.5), rgba(12,20,36,0.25));
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .topbar .title { color:#fff; font-weight:600; font-size:1.05rem; }
+
+    /* HAMBURGER BUTTON */
+    .hamburger {
+      width: 36px;
+      height: 30px;
+      display: inline-flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .hamburger span {
+      display:block;
+      height:3px;
+      border-radius:3px;
+      background: #dfe8ff;
+      transform-origin: 3px 50%;
+      transition: transform .28s cubic-bezier(.2,.9,.2,1), opacity .2s ease, margin .2s ease;
+    }
+    .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(-4px, 4px); }
+    .hamburger.open span:nth-child(2) { opacity: 0; transform: translateX(6px); }
+    .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(-5px, -5px); }
+
+    /* MAIN CONTENT */
+    main {
+      margin-left: 250px; /* leave space for sidebar desktop */
+      padding: 80px 36px 60px 36px;
+      width: calc(100% - 250px);
+    }
+    header.main-head {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 18px;
+    }
+    header.main-head h1 {
+      color: #f8fbff;
+      font-size: 1.5rem;
+      letter-spacing: 0.2px;
+    }
+
+    /* ISSUE GRID */
+    .issue-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 22px;
+      max-width: 1200px;
+    }
+    .issue-card {
+      background: #ffffff;
+      color: #0b1630;
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 8px 30px rgba(7,12,30,0.12);
+      transition: transform .18s ease, box-shadow .25s ease;
+      cursor: pointer;
+    }
+    .issue-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 45px rgba(8,18,40,0.16);
+    }
+    .issue-card h3 { font-size:1.15rem; margin-bottom:8px; }
+    .issue-card p { font-size:0.95rem; color: #333; line-height:1.45; }
+
+    /* DARK OVERLAY + SIDE PANEL (detail) */
+    .dark-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.62);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .32s ease;
+      z-index: 1300;
+    }
+    .dark-overlay.active { opacity: 1; pointer-events: auto; }
+
+    .side-panel {
+      position: fixed;
+      inset: 0;
+      max-width: 680px;
+      margin: auto;
+      top: 50%;
+      transform: translateY(-50%) scale(.98);
+      background: linear-gradient(180deg, rgba(16,30,57,0.98) 0%, rgba(24,41,73,0.98) 100%);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 22px 60px rgba(6,12,28,0.6);
+      opacity: 0;
+      transition: opacity .36s ease, transform .36s cubic-bezier(.2,.9,.3,1);
+      z-index: 1400;
+      pointer-events: none;
+      color: #eaf0ff;
+      width: calc(100% - 48px);
+      max-height: calc(100vh - 60px);
+      overflow: auto;
+    }
+    .side-panel.active { opacity: 1; transform: translateY(-50%) scale(1); pointer-events: auto; }
+    .side-panel img { width:100%; height: 260px; object-fit: cover; border-radius:10px; margin-bottom:12px; border: 1px solid rgba(255,255,255,0.02); }
+    .side-panel h2 { font-size:1.35rem; margin-bottom:6px; color:#fff; }
+    .side-panel p { color:#cfe0ff; margin:8px 0; font-size:1rem; }
+    .side-panel .meta { color:#bcd0ff; font-size:0.95rem; margin-top:4px; }
+
+    /* BUTTONS - glowing blue */
+    .btn {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:10px 16px;
+      border-radius:10px;
+      border: none;
+      font-weight:600;
+      cursor:pointer;
+      transition: all .22s ease;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg,#3f6bff 0%, #1f50ff 100%);
+      color: #fff;
+      box-shadow: 0 10px 28px rgba(40,80,255,0.18), 0 0 18px rgba(60,110,255,0.08) inset;
+    }
+    .btn.primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 40px rgba(28,64,255,0.22);
+    }
+    .btn.ghost {
+      background: rgba(255,255,255,0.06);
+      color: #eaf0ff;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* MOBILE NAV (slide-in) */
+    .mobile-nav {
+      position: fixed;
+      top: 62px;
+      right: -100%;
+      width: 78%;
+      max-width: 420px;
+      height: calc(100vh - 62px);
+      background: linear-gradient(180deg,#091227 0%, #12263f 100%);
+      box-shadow: -12px 0 40px rgba(0,0,0,0.6);
+      padding: 20px;
+      z-index: 1250;
+      transition: right .34s cubic-bezier(.2,.9,.2,1);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .mobile-nav.open { right: 0; }
+    .mobile-nav a { color:#dbe9ff; text-decoration:none; padding:12px; border-radius:10px; display:block; }
+    .mobile-nav a:hover { background: rgba(255,255,255,0.03); transform: translateX(6px); }
+
+    /* RESPONSIVE RULES */
+    @media (max-width: 900px) {
+      main { padding: 78px 18px 40px 18px; margin-left: 0; width: 100%; }
+      .sidebar { transform: translateX(-10px); }
+    }
+    @media (max-width: 780px) {
+      .sidebar { display: none; }
+      .topbar { display: flex; }
+      .topbar .title { font-size: 1rem; }
+      .issue-list { gap: 16px; }
+      .side-panel { width: 92%; padding: 18px; }
+    }
+    @media (max-width: 480px) {
+      .hamburger { width:34px; height:26px; }
+      .side-panel img { height: 180px; }
+      .issue-card { padding:14px; border-radius:12px; }
+    }
+
+    /* small visual niceties */
+    .muted { color: #b9c7ff; font-size:0.92rem; }
+    .row { display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-top:14px; }
+  </style>
+</head>
+<body>
+
+  <!-- left sidebar (desktop) -->
+  <aside class="sidebar" aria-label="Primary Navigation">
+    <div class="brand">RPSU Lost &amp; Found</div>
+    <a class="navlink" href="profile.html">Profile</a>
+    <a class="navlink" href="Main.html">Post Issues</a>
+    <a class="navlink" href="Allpost.html">All Posts</a>
+    <a class="navlink" href="MyIssue.html">My Issues</a>
+    <a class="navlink" href="index.html">Logout</a>
+  </aside>
+
+  <!-- topbar (mobile) -->
+  <div class="topbar" role="banner">
+    <div class="title">RPSU — Issues</div>
+    <div class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" role="button" tabindex="0">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <!-- slide-in mobile nav -->
+  <nav class="mobile-nav" id="mobileNav" aria-hidden="true">
+    <a href="Main.html">Profile</a>
+    <a href="Main.html">Post Issues</a>
+    <a href="Allpost.html">All Posts</a>
+    <a href="MyIssue.html">My Issues</a>
+    <a href="index.html">Logout</a>
+  </nav>
+
+  <!-- main content -->
+  <main>
+    <header class="main-head">
+      <h1>Issue List</h1>
+      <div class="muted">Click a card to open details</div>
+    </header>
+
+    <section class="issue-list" id="issueList" aria-live="polite"></section>
+  </main>
+
+  <!-- overlay and detail side panel -->
+  <div class="dark-overlay" id="overlay" onclick="closePanel()"></div>
+
+  <aside class="side-panel" id="sidePanel" aria-hidden="true" role="dialog" aria-label="Issue details">
+    <img id="issueImage" src="" alt="Issue image">
+    <h2 id="issueTitle">Title</h2>
+    <p class="meta"><strong>Place:</strong> <span id="issuePlace"></span></p>
+    <p><strong>Description</strong></p>
+    <p id="issueDesc"></p>
+
+    <div class="row">
+      <button class="btn ghost" onclick="closePanel()">Cancel</button>
+      <button class="btn primary" onclick="closePanel()">Save</button>
+    </div>
+  </aside>
+
+  <script>
+    const issues = [
+      {id:1, title:"Lost Wallet", place:"Library", desc:"Black leather wallet, may have a student ID & a few cards inside. Last seen near reading area.", image:"https://via.placeholder.com/900x500?text=Wallet"},
+      {id:2, title:"Found Watch", place:"Cafeteria", desc:"Silver analog watch with a leather strap - placed on the counter.", image:"https://via.placeholder.com/900x500?text=Watch"},
+      {id:3, title:"Lost Umbrella", place:"Main Gate", desc:"Red umbrella with black handle. Left during rainy day.", image:"https://via.placeholder.com/900x500?text=Umbrella"},
+      {id:4, title:"Found Keys", place:"Lab", desc:"Bunch of 4 keys on blue keyring.", image:"https://via.placeholder.com/900x500?text=Keys"}
+    ];
+
+    const listEl = document.getElementById('issueList');
+    issues.forEach(issue => {
+      const c = document.createElement('article');
+      c.className = 'issue-card';
+      c.setAttribute('role','button');
+      c.setAttribute('tabindex','0');
+      c.innerHTML = `
+        <h3>${escapeHtml(issue.title)}</h3>
+        <p><strong>Place:</strong> ${escapeHtml(issue.place)}</p>
+        <p>${escapeHtml(issue.desc)}</p>
+      `;
+      c.addEventListener('click', () => openPanel(issue));
+      c.addEventListener('keypress', (e) => { if (e.key === 'Enter' || e.key === ' ') openPanel(issue); });
+      listEl.appendChild(c);
+    });
+
+    const overlay = document.getElementById('overlay');
+    const panel = document.getElementById('sidePanel');
+    function openPanel(issue) {
+      document.getElementById('issueImage').src = issue.image || '';
+      document.getElementById('issueImage').alt = issue.title || 'Issue image';
+      document.getElementById('issueTitle').innerText = issue.title || '';
+      document.getElementById('issuePlace').innerText = issue.place || '';
+      document.getElementById('issueDesc').innerText = issue.desc || '';
+      overlay.classList.add('active');
+      panel.classList.add('active');
+      panel.setAttribute('aria-hidden','false');
+    }
+    function closePanel() {
+      overlay.classList.remove('active');
+      panel.classList.remove('active');
+      panel.setAttribute('aria-hidden','true');
+    }
+
+    const hamburger = document.getElementById('hamburgerBtn');
+    const mobileNav = document.getElementById('mobileNav');
+    let navOpen = false;
+    function toggleMobileNav() {
+      navOpen = !navOpen;
+      hamburger.classList.toggle('open', navOpen);
+      mobileNav.classList.toggle('open', navOpen);
+      hamburger.setAttribute('aria-expanded', String(navOpen));
+      mobileNav.setAttribute('aria-hidden', String(!navOpen));
+      document.body.style.overflow = navOpen ? 'hidden' : '';
+    }
+
+    hamburger.addEventListener('click', toggleMobileNav);
+    hamburger.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMobileNav(); } });
+
+    window.addEventListener('click', (e) => {
+      if (navOpen) {
+        const target = e.target;
+        if (!mobileNav.contains(target) && !hamburger.contains(target)) {
+          toggleMobileNav();
+        }
+      }
+    });
+
+    function escapeHtml(str = '') {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (panel.classList.contains('active')) closePanel();
+        if (navOpen) toggleMobileNav();
+      }
+    });
+  </script>
+</body>
+</html>

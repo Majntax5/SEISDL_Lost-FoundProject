@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Signup • RPSU Lost &amp; Found</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root { --bg: url('images/Ig01.jpg'); }
+
+    /* ✨ Signup panel entry animation */
+    .form-card {
+      opacity: 0;
+      transform: translateY(40px) scale(0.95);
+      animation: fadeInUp 1s ease forwards;
+    }
+    @keyframes fadeInUp {
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ✨ Premium 3D button (Signup only, compact size) */
+    .button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #000000;
+      background: linear-gradient(145deg, #ebeeed, #ffffff);
+      box-shadow: 0 6px #3f3f3f;
+      transition: all 0.2s ease-in-out;
+      display: inline-block; /* ✅ fits content */
+    }
+    .button:hover { filter: brightness(1.1); }
+    .button:active { transform: translateY(4px); box-shadow: 0 2px #006e52; }
+
+    /* ✨ Google button style (full width) */
+    .google-btn {
+      margin-top: 1rem;
+      border: none;
+      border-radius: 12px;
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #fff;
+      color: #444;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease-in-out;
+    }
+    .google-btn img {
+      width: 20px;
+      height: 20px;
+    }
+    .google-btn:hover { background: #f7f7f7; }
+
+    /* ✨ Input fields glow + zoom */
+    .input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 1rem;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      outline: none;
+      font-size: 15px;
+      transition: all 0.25s ease-in-out;
+    }
+    .input:hover,
+    .input:focus {
+      border-color: #ffffff;
+      box-shadow: 0 0 12px rgba(249, 249, 249, 0.7);
+      transform: scale(1.03);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Error text */
+    .error { color: #ff7777; margin-top: 0.5rem; font-size: 14px; }
+
+    /* Password strength bar */
+    .strength-bar {
+      height: 8px;
+      border-radius: 5px;
+      margin: -0.5rem 0 0.5rem 0;
+      background: #ddd;
+      overflow: hidden;
+    }
+    .strength-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+
+    /* Row layout */
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <main class="hero">
+    <div class="overlay"></div>
+    <div class="container">
+      <section class="glass form-card">
+        <h2>Signup</h2>
+        <form class="form" id="signupForm" method="POST" action="register.php">
+
+          <input class="input" type="text" id="suName" name="username" placeholder="Username" required>
+<input class="input" type="email" id="suEmail" name="email" placeholder="Email" required>
+
+<input class="input" type="password" id="suPass" name="password" placeholder="Password" minlength="6" required>
+<!-- Strength bar -->
+<div class="strength-bar"><div id="strengthFill" class="strength-fill"></div></div>
+
+<input class="input" type="password" id="suPass2" name="confirm_password" placeholder="Confirm password" minlength="6" required>
+
+          <div class="row">
+            <button class="button" type="submit">Signup</button>
+            <div><span style="opacity:.85;">Already have account?</span> <a class="muted" href="login.html">Login</a></div>
+          </div>
+          <div id="signupError" class="error"></div>
+        </form>
+
+        
+      </section>
+    </div>
+    <div class="footer"><a class="muted" href="index.html">← Back</a></div>
+  </main>
+
+  <script>
+// ===================== PASSWORD STRENGTH BAR =====================
+const password = document.getElementById('suPass');
+const strengthFill = document.getElementById('strengthFill');
+
+password.addEventListener('input', () => {
+  const val = password.value;
+  let strength = 0;
+
+  if (val.length >= 6) strength++;
+  if (/[A-Z]/.test(val)) strength++;
+  if (/[0-9]/.test(val)) strength++;
+  if (/[!@#$%^&*(),.?":{}|<>]/.test(val)) strength++;
+
+  switch (strength) {
+    case 0:
+      strengthFill.style.width = "0%";
+      strengthFill.style.background = "#ddd";
+      break;
+    case 1:
+      strengthFill.style.width = "33%";
+      strengthFill.style.background = "#ff4d4d";
+      break;
+    case 2:
+      strengthFill.style.width = "66%";
+      strengthFill.style.background = "#ffb84d";
+      break;
+    case 3:
+    case 4:
+      strengthFill.style.width = "100%";
+      strengthFill.style.background = "#00c896";
+      break;
+  }
+});
+
+// ===================== EMAIL AUTOCOMPLETE (ONLY rpsu.edu.bd) =====================
+const emailField = document.getElementById('suEmail');
+const emailError = document.createElement('small');
+emailError.style.color = "#ff4d4d";
+emailError.style.display = "block";
+emailError.style.marginTop = "5px";
+emailError.style.fontSize = "0.85em";
+emailField.parentNode.appendChild(emailError);
+
+// Disable normal browser autocomplete (so only our suggestion appears)
+emailField.setAttribute("autocomplete", "off");
+
+// Create datalist for suggestion box
+const dataList = document.createElement('datalist');
+dataList.id = "emailSuggestion";
+document.body.appendChild(dataList);
+emailField.setAttribute("list", "emailSuggestion");
+
+// Update suggestion dynamically while typing
+emailField.addEventListener('input', () => {
+  const val = emailField.value.trim();
+  dataList.innerHTML = ""; // clear old suggestions
+
+  if (val && !val.includes('@')) {
+    const option = document.createElement('option');
+    option.value = val + '@rpsu.edu.bd';
+    dataList.appendChild(option);
+  }
+
+  // Validate domain
+  if (val && !val.endsWith('@rpsu.edu.bd')) {
+    emailField.style.borderColor = "#ff4d4d";
+    emailError.textContent = "Use your institutional email (must end with @rpsu.edu.bd)";
+  } else {
+    emailField.style.borderColor = "#00c896";
+    emailError.textContent = "";
+  }
+});
+
+// Auto-fix domain when leaving the field
+emailField.addEventListener('blur', () => {
+  let val = emailField.value.trim();
+  if (val && !val.endsWith('@rpsu.edu.bd')) {
+    const prefix = val.split('@')[0];
+    emailField.value = prefix + '@rpsu.edu.bd';
+    emailField.style.borderColor = "#00c896";
+    emailError.textContent = "";
+  }
+});
+
+// ===================== PASSWORD EYE ICON (FIXED BOTH FIELDS) =====================
+function createEyeToggle(inputId) {
+  const input = document.getElementById(inputId);
+  const wrapper = input.parentNode;
+
+  // Remove any previous icons to avoid duplicates
+  const oldIcon = wrapper.querySelector('.eye-toggle');
+  if (oldIcon) oldIcon.remove();
+
+  const eyeIcon = document.createElement('span');
+  eyeIcon.classList.add('eye-toggle');
+  eyeIcon.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>`;
+  eyeIcon.style.position = 'absolute';
+  eyeIcon.style.right = '12px';
+  eyeIcon.style.top = '50%';
+  eyeIcon.style.transform = 'translateY(-50%)';
+  eyeIcon.style.cursor = 'pointer';
+  eyeIcon.style.opacity = '0.6';
+  eyeIcon.style.transition = 'opacity 0.2s';
+
+  wrapper.style.position = 'relative';
+  wrapper.appendChild(eyeIcon);
+
+  // Toggle behavior
+  eyeIcon.addEventListener('click', () => {
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    eyeIcon.style.opacity = isHidden ? '1' : '0.6';
+    eyeIcon.innerHTML = isHidden
+      ? `
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye-off">
+        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20C5 20 1 12 1 12a21.63 21.63 0 0 1 5.09-6.14M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.63 21.63 0 0 1-3.06 4.38M1 1l22 22"></path>
+      </svg>`
+      : `
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>`;
+  });
+}
+
+// Apply toggle to both password fields (no glitch now)
+createEyeToggle('suPass');
+createEyeToggle('suPass2');
+
+// ===================== SIGNUP FORM SUBMIT =====================
+document.getElementById('signupForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const name = document.getElementById('suName').value.trim();
+  const email = document.getElementById('suEmail').value.trim();
+  const p1 = document.getElementById('suPass').value;
+  const p2 = document.getElementById('suPass2').value;
+  const err = document.getElementById('signupError');
+  err.textContent = '';
+
+  // Validation
+  if (!name || !email || !p1 || !p2) {
+    err.textContent = 'Please fill in all fields.';
+    return;
+  }
+
+  if (!email.endsWith('@rpsu.edu.bd')) {
+    err.textContent = 'Email must end with @rpsu.edu.bd';
+    emailField.style.borderColor = '#ff4d4d';
+    return;
+  }
+
+  const hasUpper = /[A-Z]/.test(p1);
+  const hasNumber = /[0-9]/.test(p1);
+  const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(p1);
+
+  if (p1.length < 6) {
+    err.textContent = 'Password must be at least 6 characters.';
+    return;
+  }
+  if (!(hasUpper && hasNumber && hasSymbol)) {
+    err.textContent = 'Password must contain 1 uppercase, 1 number, and 1 symbol.';
+    return;
+  }
+  if (p1 !== p2) {
+    err.textContent = 'Passwords do not match.';
+    return;
+  }
+
+  // ✅ Send data to backend
+  try {
+    const formData = new FormData();
+    formData.append('suName', name);
+    formData.append('suEmail', email);
+    formData.append('suPass', p1);
+
+    const response = await fetch('signup.php', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.text();
+
+    if (result.includes('successful')) {
+      alert('Signup successful! Please log in.');
+      window.location.href = 'login.html';
+    } else {
+      err.textContent = result;
+    }
+  } catch (error) {
+    err.textContent = 'Server error — check your PHP setup.';
+  }
+});
+
+// ===================== GOOGLE SIGNUP DEMO =====================
+document.getElementById('googleSignup').addEventListener('click', () => {
+  alert('Google signup demo only. You can integrate Firebase Auth / Google OAuth here.');
+});
+</script>
+</body>
+</html>
